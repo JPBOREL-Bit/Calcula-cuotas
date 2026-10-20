@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFD60A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cuotas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Calculá cuánto pagás por cuota y en total, con o sin interés, en la moneda que quieras.">
+<title>Calculadora de cuotas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sun: #FFD60A;
+    --pink: #FF4F9A;
+    --mint: #3DDC97;
+    --ink: #0D0D0D;
+    --paper: #FFFDF5;
+    --red: #FF3B30;
+    color-scheme: light;
+    box-sizing: border-box;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--sun);
+    background-image: radial-gradient(var(--ink) 1px, transparent 1px);
+    background-size: 18px 18px;
+    color: var(--ink);
+    font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  }
+  main { max-width: 560px; margin: 0 auto; }
+
+  .title {
+    font-family: "Archivo Black", "Arial Black", Impact, sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.2rem, 10vw, 3.6rem);
+    line-height: 0.95;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+  .title mark {
+    background: var(--pink);
+    color: var(--ink);
+    padding: 0 10px;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    display: inline-block;
+    margin-top: 8px;
+  }
+  .lead { margin: 0 0 22px; font-weight: 500; font-size: 1.05rem; }
+
+  .card {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--ink);
+    padding: 20px;
+  }
+
+  .seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 3px solid var(--ink);
+    margin: 0 0 20px;
+  }
+  .seg button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: 0;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 12px 6px;
+    min-height: 52px;
+    cursor: pointer;
+    line-height: 1.15;
+  }
+  .seg button + button { border-left: 3px solid var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--mint); }
+  .seg button:focus-visible { outline: 4px solid var(--pink); outline-offset: -8px; }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field > span {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .opt {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 0.8rem;
+    background: var(--sun);
+    border: 2px solid var(--ink);
+    padding: 0 6px;
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+  .field input, .field select {
+    width: 100%;
+    font: inherit;
+    font-size: 17px; /* evita zoom automático en iOS */
+    font-weight: 500;
+    padding: 12px 14px;
+    min-height: 52px;
+    border: 3px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .field select {
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+    background-position: calc(100% - 22px) 56%, calc(100% - 16px) 56%;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 42px;
+  }
+  .field input:focus-visible, .field select:focus-visible {
+    outline: 4px solid var(--pink);
+    outline-offset: 2px;
+  }
+  .hint { color: #3a3a3a; font-size: 0.88rem; margin: 6px 0 0; }
+  [hidden] { display: none !important; }
+
+  .summary {
+    margin-top: 24px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 22px 20px;
+    border: 3px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--pink);
+  }
+  .summary .etiqueta {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    margin: 0 0 4px;
+    color: var(--sun);
+  }
+  .summary .grande {
+    font-family: "Archivo Black", "Arial Black", Impact, sans-serif;
+    font-size: clamp(2.3rem, 11vw, 3.4rem);
+    line-height: 1;
+    margin: 0 0 6px;
+    color: var(--mint);
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+  .summary .sub { margin: 0 0 18px; opacity: 0.9; min-height: 1.4em; }
+  .summary .sub.alerta { color: var(--pink); font-weight: 700; opacity: 1; }
+  .summary .vacio { opacity: 0.8; margin: 0; }
+
+  dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px 16px;
+    margin: 0;
+    padding-top: 16px;
+    border-top: 2px dashed var(--paper);
+  }
+  dt { opacity: 0.85; }
+  dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+  dd.malo { color: var(--pink); }
+  dd.bueno { color: var(--mint); }
+
+  footer {
+    margin-top: 22px;
+    font-size: 0.82rem;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  @media (max-width: 380px) {
+    .seg button { font-size: 0.82rem; padding: 10px 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .summary .grande { transition: transform 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 class="title">¿Cuánto pagás <mark>de verdad?</mark></h1>
+    <p class="lead">Compará el precio de contado con las cuotas y mirá cuánto pagás de más.</p>
+  </header>
+
+  <section class="card" aria-label="Datos de la compra">
+    <form id="form" novalidate autocomplete="off">
+      <label class="field">
+        <span>Moneda</span>
+        <select id="moneda"></select>
+      </label>
+
+      <div class="seg" role="group" aria-label="Forma de pago">
+        <button type="button" data-modo="contado" aria-pressed="false">Contado</button>
+        <button type="button" data-modo="fija" aria-pressed="true">Cuotas sin interés</button>
+        <button type="button" data-modo="interes" aria-pressed="false">Cuotas con interés</button>
+      </div>
+
+      <label class="field">
+        <span>Precio sin cuotas <em class="opt" id="opt-precio">opcional</em></span>
+        <input id="precio" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej: 150000">
+        <p class="hint" id="hint-precio">Es el valor de contado. Si lo cargás, te muestro cuánto pagás de más.</p>
+      </label>
+
+      <div id="bloque-cuotas">
+        <label class="field">
+          <span>Cantidad de cuotas</span>
+          <input id="cuotas" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej: 6">
+        </label>
+
+        <label class="field">
+          <span>Valor de cada cuota <em class="opt">opcional</em></span>
+          <input id="cuota-valor" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej: 25000">
+          <p class="hint">Si ya sabés cuánto sale cada cuota, cargalo acá.</p>
+        </label>
+
+        <label class="field" id="campo-interes" hidden>
+          <span>Interés mensual (%)</span>
+          <input id="interes" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej: 12">
+          <p class="hint">Solo se usa si no cargaste el valor de cada cuota.</p>
+        </label>
+      </div>
+    </form>
+
+    <div class="summary" aria-live="polite">
+      <p class="etiqueta" id="etiqueta">Completá los datos</p>
+      <p class="grande" id="grande">—</p>
+      <p class="sub" id="sub"></p>
+      <dl id="detalle" hidden>
+        <dt>Cantidad de cuotas</dt><dd id="r-cuotas">—</dd>
+        <dt>Total que pagás</dt><dd id="r-total">—</dd>
+        <dt>Precio de contado</dt><dd id="r-contado">—</dd>
+        <dt id="dt-extra">Pagás de más</dt><dd id="r-extra">—</dd>
+        <dt>Recargo</dt><dd id="r-pct">—</dd>
+      </dl>
+    </div>
+  </section>
+
+  <footer>Resultado orientativo. Confirmá las condiciones finales con el comercio o la tarjeta.</footer>
+</main>
+
+<script>
+  // Monedas más usadas del mundo (ISO 4217)
+  const MONEDAS = [
+    "ARS","USD","EUR","GBP","JPY","CNY","CHF","CAD","AUD","NZD",
+    "BRL","MXN","CLP","COP","PEN","UYU","BOB","PYG","VES","DOP",
+    "GTQ","CRC","HNL","NIO","PAB","CUP","HKD","SGD","KRW","INR",
+    "IDR","THB","MYR","PHP","VND","TWD","PKR","BDT","LKR","NPR",
+    "SEK","NOK","DKK","ISK","PLN","CZK","HUF","RON","BGN","TRY",
+    "RUB","UAH","ILS","AED","SAR","QAR","KWD","EGP","MAD","ZAR",
+    "NGN","KES","GHS","XOF"
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const selMoneda = $("moneda");
+  let nombresMonedas = null;
+  try { nombresMonedas = new Intl.DisplayNames(["es"], { type: "currency" }); } catch (e) { nombresMonedas = null; }
+
+  MONEDAS.forEach((code) => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    let nombre = "";
+    try { nombre = nombresMonedas ? nombresMonedas.of(code) : ""; } catch (e) { nombre = ""; }
+    opt.textContent = nombre ? `${code} · ${nombre}` : code;
+    if (code === "ARS") opt.selected = true;
+    selMoneda.appendChild(opt);
+  });
+
+  let modo = "fija";
+
+  function dinero(valor) {
+    const moneda = selMoneda.value;
+    try {
+      return new Intl.NumberFormat("es", {
+        style: "currency",
+        currency: moneda,
+        maximumFractionDigits: 2
+      }).format(valor);
+    } catch (e) {
+      return moneda + " " + valor.toFixed(2);
+    }
+  }
+
+  function numero(id) {
+    const texto = $(id).value.replace(",", ".");
+    const n = parseFloat(texto);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function aplicarModo(nuevo) {
+    modo = nuevo;
+    document.querySelectorAll(".seg button").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.modo === nuevo));
+    });
+    const esContado = nuevo === "contado";
+    $("bloque-cuotas").hidden = esContado;
+    $("campo-interes").hidden = nuevo !== "interes";
+    $("opt-precio").textContent = esContado ? "obligatorio" : "opcional";
+    $("hint-precio").textContent = esContado
+      ? "Es el precio que pagás en un solo pago."
+      : "Si lo cargás, te muestro cuánto pagás de más.";
+    calcular();
+  }
+
+  function calcular() {
+    const etiqueta = $("etiqueta");
+    const grande = $("grande");
+    const sub = $("sub");
+    const detalle = $("detalle");
+    sub.className = "sub";
+    detalle.hidden = true;
+
+    const precio = numero("precio");
+    const valorCuota = numero("cuota-valor");
+    const cuotas = numero("cuotas");
+    const interes = numero("interes");
+    const tienePrecio = precio > 0;
+    const tieneCuota = valorCuota > 0;
+
+    // Contado: un solo pago
+    if (modo === "contado") {
+      if (!tienePrecio) {
+        etiqueta.textContent = "Completá los datos";
+        grande.textContent = "—";
+        sub.textContent = "Cargá el precio de contado para empezar.";
+        return;
+      }
+      etiqueta.textContent = "Pagás en un solo pago";
+      grande.textContent = dinero(precio);
+      sub.textContent = "Sin cuotas, sin recargo.";
+      return;
+    }
+
+    // Cuotas
+    if (!(cuotas >= 1) || !Number.isInteger(cuotas)) {
+      etiqueta.textContent = "Completá los datos";
+      grande.textContent = "—";
+      sub.textContent = "Indicá la cantidad de cuotas (mínimo 1).";
+      return;
+    }
+    if (!tienePrecio && !tieneCuota) {
+      etiqueta.textContent = "Completá los datos";
+      grande.textContent = "—";
+      sub.textContent = "Cargá el precio de contado o el valor de cada cuota.";
+      return;
+    }
+    if (!tieneCuota && modo === "interes" && !(interes >= 0)) {
+      etiqueta.textContent = "Completá los datos";
+      grande.textContent = "—";
+      sub.textContent = "Indicá el interés mensual (0 si no tiene).";
+      return;
+    }
+
+    let cuota;
+    let total;
+
+    if (tieneCuota) {
+      cuota = valorCuota;
+      total = valorCuota * cuotas;
+    } else if (modo === "fija") {
+      cuota = precio / cuotas;
+      total = precio;
+    } else {
+      const r = interes / 100;
+      cuota = r === 0 ? precio / cuotas : (precio * r) / (1 - Math.pow(1 + r, -cuotas));
+      total = cuota * cuotas;
+    }
+
+    etiqueta.textContent = `Cada cuota (${cuotas} ${cuotas === 1 ? "cuota" : "cuotas"})`;
+    grande.textContent = dinero(cuota);
+
+    $("r-cuotas").textContent = cuotas;
+    $("r-total").textContent = dinero(total);
+    $("r-contado").textContent = tienePrecio ? dinero(precio) : "—";
+
+    if (tienePrecio) {
+      const extra = total - precio;
+      const pct = (extra / precio) * 100;
+      const dtExtra = $("dt-extra");
+      const ddExtra = $("r-extra");
+      const ddPct = $("r-pct");
+      ddExtra.className = "";
+      if (extra > 0.005) {
+        dtExtra.textContent = "Pagás de más";
+        ddExtra.textContent = dinero(extra);
+        ddExtra.className = "malo";
+        ddPct.textContent = pct.toFixed(1).replace(".", ",") + "%";
+        ddPct.className = "malo";
+        sub.textContent = `Con cuotas pagás ${dinero(extra)} más que de contado.`;
+        sub.classList.add("alerta");
+      } else if (extra < -0.005) {
+        dtExtra.textContent = "Te ahorrás";
+        ddExtra.textContent = dinero(-extra);
+        ddExtra.className = "bueno";
+        ddPct.textContent = pct.toFixed(1).replace(".", ",") + "%";
+        ddPct.className = "bueno";
+        sub.textContent = "Esta forma de pago sale menos que el contado.";
+      } else {
+        dtExtra.textContent = "Pagás de más";
+        ddExtra.textContent = dinero(0);
+        ddPct.textContent = "0%";
+        ddPct.className = "";
+        sub.textContent = "Sin recargo: pagás exactamente el precio de contado.";
+      }
+    } else {
+      $("dt-extra").textContent = "Pagás de más";
+      $("r-extra").textContent = "Cargá el precio de contado";
+      $("r-extra").className = "";
+      $("r-pct").textContent = "—";
+      $("r-pct").className = "";
+      sub.textContent = "Cargá el precio de contado para ver cuánto pagás de más.";
+    }
+    detalle.hidden = false;
+  }
+
+  document.querySelectorAll(".seg button").forEach((b) => {
+    b.addEventListener("click", () => aplicarModo(b.dataset.modo));
+  });
+  $("form").addEventListener("submit", (e) => e.preventDefault());
+  $("form").addEventListener("input", calcular);
+  selMoneda.addEventListener("change", calcular);
+
+  aplicarModo("fija");
+</script>
+</body>
+</html>
